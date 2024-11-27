@@ -1,7 +1,20 @@
+behoof @ git+https://github.com/pascal65536/behoof@c334102796569701cd951163663feb502054555e
+black==24.10.0
 blinker==1.9.0
 click==8.1.7
+et_xmlfile==2.0.0
 Flask==3.0.3
 itsdangerous==2.2.0
 Jinja2==3.1.4
+markdown2==2.5.1
 MarkupSafe==3.0.2
+mypy-extensions==1.0.0
+openpyxl==3.1.5
+packaging==24.2
+pathspec==0.12.1
+pillow==11.0.0
+platformdirs==4.3.6
+PyQt6==6.7.1
+PyQt6-Qt6==6.7.3
+PyQt6_sip==13.8.0
 Werkzeug==3.1.3

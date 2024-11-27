@@ -8,9 +8,8 @@ from PyQt6.QtWidgets import (
     QLabel,
 )
 from PyQt6.QtCore import Qt
-from markdown2 import markdown
-from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import QUrl
+from markdown2 import markdown
 
 
 class MarkdownViewer(QWidget):
@@ -21,21 +20,13 @@ class MarkdownViewer(QWidget):
         self.markdown_input = QTextEdit(self)
         self.markdown_input.setPlaceholderText("Введите ваш Markdown код здесь...")
         self.markdown_input.setFixedWidth(500)
-
         layout.addWidget(self.markdown_input)
-        self.web_view = QWebEngineView(self)
-
-        url1 = QUrl()
-        url1.setUrl("https://kompoblog.ru/")
-        self.web_view.setUrl(url1)
-        layout.addWidget(self.web_view)
         self.markdown_input.textChanged.connect(self.update_output)
         self.setLayout(layout)
 
     def update_output(self):
         markdown_text = self.markdown_input.toPlainText()
         html_text = markdown(markdown_text)
-        # self.markdown_output.setText(html_text)
         html = f"<!DOCTYPE html><html>{html_text}</html>"
         html1 = """
 <!DOCTYPE html>
@@ -52,8 +43,6 @@ class MarkdownViewer(QWidget):
     </body>
 </html>        
         """
-        print(html)
-        self.web_view.setHtml(html)
 
 
 if __name__ == "__main__":

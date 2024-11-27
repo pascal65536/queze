@@ -1,18 +1,17 @@
-import utilspascal65536 as utils
+import behoof as utils
 import pandas as pd
 import os
 import openpyxl
 
 
-def json_to_excel(json_file, excel_file):
+def json_to_excel(json_file, excel_file, folder_name = "data"):
     """
     Converts a JSON file to an Excel file.
     """
-    folder_name = "queze"
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     excel_filename = os.path.join(folder_name, excel_file)
-    data = utils.load_json("queze", json_file)
+    data = utils.load_json(folder_name, json_file)
     with pd.ExcelWriter(excel_filename, engine="openpyxl") as writer:
         root = list()
         root.append("Название")
@@ -94,11 +93,10 @@ def json_to_json(json_file, out_json):
     utils.save_json("queze", out_json, topic_dct)
 
 
-def excel_to_json(excel_file, json_file):
+def excel_to_json(excel_file, json_file, folder_name = "data"):
     """
     Функция для преобразования Excel в JSON
     """
-    folder_name = "queze"
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
     excel_filename = os.path.join(folder_name, excel_file)
@@ -144,9 +142,9 @@ def excel_to_json(excel_file, json_file):
             if this_dct["question"] and this_dct["answers"]:
                 local_lst.append(this_dct)
             res_dct["tests"].append({"title": worksheet.title, "questions": local_lst})
-    data = utils.load_json("queze", json_file)
+    data = utils.load_json(folder_name, json_file)
     data[excel_file] = res_dct
-    utils.save_json("queze", json_file, data)
+    utils.save_json(folder_name, json_file, data)
 
 
 if __name__ == "__main__":
