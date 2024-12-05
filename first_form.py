@@ -1,14 +1,16 @@
 import sys
+import os
 import io
 from PyQt6 import uic
 from PyQt6.QtWidgets import QWidget, QApplication, QComboBox
 
 
 class FirstForm(QWidget):
-
+    # TODO
     def __init__(self):
         super(FirstForm, self).__init__()
-        uic.loadUi("queze/first_widget.ui", self)
+        path_ui = os.path.join('queze', 'first_widget.ui')
+        uic.loadUi(path_ui, self)
 
         self.tests.addItem("---")
         self.tests.addItem("1")
