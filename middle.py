@@ -1,27 +1,31 @@
+import re
 import os
 import sys
 import time
-import json
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextEdit
+import string
+import behoof
+from PyQt6.QtWidgets import QFormLayout, QMessageBox, QComboBox, QTabWidget, QDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextEdit
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import QTimer, QTime, Qt
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-
+        self.data_lst = behoof.load_json('data', 'content.json')
+        self.user = None
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('PyQt6 Приложение')
+        self.setWindowTitle('Локальная тестирующая система')
 
+        if self.user is None:
+            self.show_modal_window()
+            return
+        print(self.user)
+                
         self.layout = QVBoxLayout()
-
-        # Имя пользователя
         self.username_label = QLabel('Имя пользователя: Guest')
         self.layout.addWidget(self.username_label)
-
-        # Текущее время и время работы приложения в одной строке
         self.time_layout = QHBoxLayout()
         self.current_time_label = QLabel('Текущее время: ')
         self.time_layout.addWidget(self.current_time_label)
@@ -29,22 +33,13 @@ class MainWindow(QWidget):
         self.app_time_label = QLabel('Время работы приложения: 0 секунд')
         self.time_layout.addWidget(self.app_time_label)
         self.layout.addLayout(self.time_layout)
-
-        # 27 кнопок с буквами алфавита
-        self.alphabet_layout = QHBoxLayout()
-        self.alphabet_buttons = []
-        for letter in 'ABCDEFGH':
-            button = QPushButton(letter)
-            button.clicked.connect(lambda _, l=letter: self.on_alphabet_click(l))
-            self.alphabet_buttons.append(button)
-            self.alphabet_layout.addWidget(button)
-        self.layout.addLayout(self.alphabet_layout)
-
-        # Три абзаца текста и картинка из JSON файла
-        path_json = os.path.join('data', 'content.json')        
-        self.load_content_from_json(path_json)
-
-        # Поле для ввода ответа и кнопка "Отправить" в одной строке
+        self.tab_layout = QVBoxLayout()
+        self.tab_widget = QTabWidget()
+        self.tab_layout.addWidget(self.tab_widget)
+        for idx, data in enumerate(self.data_lst):
+            tab = QWidget()
+            self.tab_widget.addTab(tab, f'Вкладка {idx + 1}')
+            self.load_content_to_tab(tab, data)
         self.input_layout = QHBoxLayout()
         self.input_field = QLineEdit()
         self.input_field.setPlaceholderText('Введите ваш ответ здесь...')
@@ -52,47 +47,126 @@ class MainWindow(QWidget):
         self.submit_button = QPushButton('Отправить')
         self.submit_button.clicked.connect(self.on_submit)
         self.input_layout.addWidget(self.submit_button)
-        self.layout.addLayout(self.input_layout)
-
-        self.setLayout(self.layout)
-
-        # Таймер для обновления времени
+        self.tab_layout.addLayout(self.input_layout) 
+        self.layout.addLayout(self.tab_layout)
+        self.setLayout(self.layout)    
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_time)
-        self.timer.start(1000)  # Обновлять каждую секунду
+        self.timer.start(1000)
 
     def update_time(self):
         current_time = QTime.currentTime().toString('hh:mm:ss')
         self.current_time_label.setText(f'Текущее время: {current_time}')
-
         app_time = int(time.time() - self.start_time)
         self.app_time_label.setText(f'Время работы приложения: {app_time} секунд')
 
     def on_alphabet_click(self, letter):
-        print(f'Нажата кнопка с буквой: {letter}')
+        self.question = string.ascii_uppercase.index(letter)
+        self.load_content_from_json()
 
     def on_submit(self):
         user_input = self.input_field.text()
         print(f'Ответ пользователя: {user_input}')
         self.input_field.clear()
 
-    def load_content_from_json(self, filename):
-        with open(filename, 'r', encoding='utf-8') as file:
-            data = json.load(file)
+    def load_content_to_tab(self, tab, data):
+        layout = QVBoxLayout()
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(data['text'])
+        layout.addWidget(text_edit)
+        dip = data['image_path']
+        if dip:
+            image_label = QLabel()
+            image_path = os.path.join('data', dip)
+            if os.path.exists(image_path):
+                pixmap = QPixmap(image_path)
+                image_label.setPixmap(pixmap)
+                image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                layout.addWidget(image_label)
+        tab.setLayout(layout)
 
-        # Три абзаца текста
-        self.text_edit = QTextEdit()
-        self.text_edit.setReadOnly(True)
-        self.text_edit.setPlainText(data['text'])
-        self.layout.addWidget(self.text_edit)
+    def show_modal_window(self):
+        dialog = AuthorizationDialog(self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.user = {
+                'last_name': dialog.last_name_input.text(),
+                'first_name': dialog.first_name_input.text(),
+                'class_name': dialog.class_input.text(),
+                'selected_theme': dialog.test_themes_combo.currentText()
+            }
+            self.initUI()  # Повторно инициализируем UI после авторизации
 
-        # Картинка
-        self.image_label = QLabel()
-        image_path = os.path.join('data', data['image_path'])     
-        pixmap = QPixmap(image_path)
-        self.image_label.setPixmap(pixmap)
-        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.layout.addWidget(self.image_label)
+class AuthorizationDialog1(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Авторизация')
+        self.layout = QFormLayout()
+        self.last_name_input = QLineEdit()
+        self.layout.addRow('Фамилия:', self.last_name_input)
+        self.first_name_input = QLineEdit()
+        self.layout.addRow('Имя:', self.first_name_input)
+        self.class_input = QLineEdit()
+        self.layout.addRow('Класс:', self.class_input)
+        self.test_themes_combo = QComboBox()
+        self.test_themes_combo.addItems(['Математика', 'Физика', 'Химия', 'Биология', 'История', 'География'])
+        self.layout.addRow('Тема теста:', self.test_themes_combo)
+        self.submit_button = QPushButton('Отправить')
+        self.submit_button.clicked.connect(self.accept)
+        self.layout.addRow(self.submit_button)
+        self.setLayout(self.layout)
+
+
+class AuthorizationDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Авторизация')
+        self.layout = QFormLayout()
+        self.last_name_input = QLineEdit()
+        self.layout.addRow('Фамилия:', self.last_name_input)
+        self.first_name_input = QLineEdit()
+        self.layout.addRow('Имя:', self.first_name_input)
+        self.class_input = QLineEdit()
+        self.layout.addRow('Класс:', self.class_input)
+        self.test_themes_combo = QComboBox()
+        self.test_themes_combo.addItems(['Математика', 'Физика', 'Химия', 'Биология', 'История', 'География'])
+        self.layout.addRow('Тема теста:', self.test_themes_combo)
+        self.submit_button = QPushButton('Отправить')
+        self.submit_button.clicked.connect(self.validate_and_accept)
+        self.layout.addRow(self.submit_button)
+
+        self.setLayout(self.layout)
+
+    def validate_and_accept(self):
+        is_valid = True
+        last_name = self.last_name_input.text()
+        first_name = self.first_name_input.text()
+        class_name = self.class_input.text()
+        if not class_name:
+            is_valid = False
+        elif len(class_name) not in [2, 3]:
+            is_valid = False
+        elif class_name[-1].lower() not in behoof.rus_alphabet:
+            is_valid = False
+        elif not class_name[:-1].isdigit():
+            is_valid = False
+        elif not last_name:
+            is_valid = False
+        elif len(last_name) < 4:
+            is_valid = False
+        elif set(last_name.lower()) - set(behoof.rus_alphabet):
+            is_valid = False
+        elif not first_name:
+            is_valid = False
+        elif len(first_name) < 4:
+            is_valid = False
+        elif set(first_name.lower()) - set(behoof.rus_alphabet):
+            is_valid = False
+        if not is_valid:
+            QMessageBox.warning(self, 'Ошибка', 'Такие данные не допустимы.')
+            return
+        self.accept()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
