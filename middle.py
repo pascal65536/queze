@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import json
@@ -40,7 +41,8 @@ class MainWindow(QWidget):
         self.layout.addLayout(self.alphabet_layout)
 
         # Три абзаца текста и картинка из JSON файла
-        self.load_content_from_json('data/content.json')
+        path_json = os.path.join('data', 'content.json')        
+        self.load_content_from_json(path_json)
 
         # Поле для ввода ответа и кнопка "Отправить" в одной строке
         self.input_layout = QHBoxLayout()
@@ -86,7 +88,8 @@ class MainWindow(QWidget):
 
         # Картинка
         self.image_label = QLabel()
-        pixmap = QPixmap(data['image_path'])
+        image_path = os.path.join('data', data['image_path'])     
+        pixmap = QPixmap(image_path)
         self.image_label.setPixmap(pixmap)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.image_label)

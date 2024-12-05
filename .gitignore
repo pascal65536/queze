@@ -3,10 +3,4 @@ __pycache__/
 *$py.class
 .venv/
 .idea/
-.data/
-*.json
-*.xlsx
-*.xls
 *.pyc
-*.jpg
-data/
