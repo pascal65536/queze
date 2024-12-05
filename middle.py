@@ -4,6 +4,7 @@ import sys
 import time
 import string
 import behoof
+import random
 from PyQt6.QtWidgets import QFormLayout, QMessageBox, QComboBox, QTabWidget, QDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextEdit
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import QTimer, QTime, Qt
@@ -12,6 +13,9 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.data_lst = behoof.load_json('data', 'content.json')
+        self.theme = None
+        self.title = None
+        self.mashup = list()
         self.user = None
         self.initUI()
 
@@ -19,10 +23,25 @@ class MainWindow(QWidget):
         self.setWindowTitle('Локальная тестирующая система')
 
         if self.user is None:
-            self.show_modal_window()
+            title = list()
+            for dl in self.data_lst:
+                title.append(dl['title'])
+            self.show_modal_window(title)
             return
-        print(self.user)
-                
+
+        selected_theme = self.user.get('selected_theme')
+        for dl in self.data_lst:
+            if dl.get('title') == selected_theme:
+                self.theme = dl
+                self.title = dl['title']
+                for mashup in dl['mashup']:
+                    for k, v in mashup.items():
+                        mashup_lst = dl.get('tests', dict()).get(k, list())
+                        random.shuffle(mashup_lst)
+                        self.mashup.extend(mashup_lst[:v])
+                random.shuffle(self.mashup)
+                break
+        
         self.layout = QVBoxLayout()
         self.username_label = QLabel('Имя пользователя: Guest')
         self.layout.addWidget(self.username_label)
@@ -36,7 +55,7 @@ class MainWindow(QWidget):
         self.tab_layout = QVBoxLayout()
         self.tab_widget = QTabWidget()
         self.tab_layout.addWidget(self.tab_widget)
-        for idx, data in enumerate(self.data_lst):
+        for idx, data in enumerate(self.mashup):
             tab = QWidget()
             self.tab_widget.addTab(tab, f'Вкладка {idx + 1}')
             self.load_content_to_tab(tab, data)
@@ -86,8 +105,8 @@ class MainWindow(QWidget):
                 layout.addWidget(image_label)
         tab.setLayout(layout)
 
-    def show_modal_window(self):
-        dialog = AuthorizationDialog(self)
+    def show_modal_window(self, title_lst):
+        dialog = AuthorizationDialog(self, title_lst=title_lst)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.user = {
                 'last_name': dialog.last_name_input.text(),
@@ -97,28 +116,9 @@ class MainWindow(QWidget):
             }
             self.initUI()  # Повторно инициализируем UI после авторизации
 
-class AuthorizationDialog1(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle('Авторизация')
-        self.layout = QFormLayout()
-        self.last_name_input = QLineEdit()
-        self.layout.addRow('Фамилия:', self.last_name_input)
-        self.first_name_input = QLineEdit()
-        self.layout.addRow('Имя:', self.first_name_input)
-        self.class_input = QLineEdit()
-        self.layout.addRow('Класс:', self.class_input)
-        self.test_themes_combo = QComboBox()
-        self.test_themes_combo.addItems(['Математика', 'Физика', 'Химия', 'Биология', 'История', 'География'])
-        self.layout.addRow('Тема теста:', self.test_themes_combo)
-        self.submit_button = QPushButton('Отправить')
-        self.submit_button.clicked.connect(self.accept)
-        self.layout.addRow(self.submit_button)
-        self.setLayout(self.layout)
-
 
 class AuthorizationDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, title_lst=list()):
         super().__init__(parent)
         self.setWindowTitle('Авторизация')
         self.layout = QFormLayout()
@@ -129,12 +129,11 @@ class AuthorizationDialog(QDialog):
         self.class_input = QLineEdit()
         self.layout.addRow('Класс:', self.class_input)
         self.test_themes_combo = QComboBox()
-        self.test_themes_combo.addItems(['Математика', 'Физика', 'Химия', 'Биология', 'История', 'География'])
+        self.test_themes_combo.addItems(title_lst)
         self.layout.addRow('Тема теста:', self.test_themes_combo)
         self.submit_button = QPushButton('Отправить')
         self.submit_button.clicked.connect(self.validate_and_accept)
         self.layout.addRow(self.submit_button)
-
         self.setLayout(self.layout)
 
     def validate_and_accept(self):
