@@ -114,7 +114,7 @@ class MainWindow(QWidget):
                 'class_name': dialog.class_input.text(),
                 'selected_theme': dialog.test_themes_combo.currentText()
             }
-            self.initUI()  # Повторно инициализируем UI после авторизации
+            self.initUI()
 
 
 class AuthorizationDialog(QDialog):
