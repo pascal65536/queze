@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, {{ current_user.username }}!</h1>
+    <p>
+        <strong>User ID:</strong> {{ current_user.id }}<br>
+        <strong>Level:</strong> {{ current_user.level }}
+    </p>
+
+    {% if current_user.level == 'admin' %}
+        <h2>All Dashboards</h2>
+    {% else %}
+        <h2>Your Dashboards</h2>
+    {% endif %}
+
+    <ul>
+        {% for dashboard in dashboards %}
+            <li>
+                <strong>Theme:</strong> {{ dashboard.selected_theme }}<br>
+                <strong>Date:</strong> {{ dashboard.date }}<br>
+                <strong>User:</strong> {{ dashboard.user.username }} (ID: {{ dashboard.user.id }}, Level: {{ dashboard.user.level }})<br>
+                <strong>Results:</strong>
+                <ul>
+                    {% for result in dashboard.results %}
+                        <li>{{ result.name }}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
