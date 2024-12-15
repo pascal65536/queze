@@ -23,12 +23,12 @@
                 },
                 {
                     "text": "Сколько бит информации содержит один байт?",
-                    "image_path": null,
+                    "image_path": "image.jpg",
                     "answer": "8"
                 },
                 {
                     "text": "Какое число является шестнадцатеричным эквивалентом десятичного числа 255?",
-                    "image_path": null,
+                    "image_path": "image.jpg",
                     "answer": "0xFF"
                 },
                 {
@@ -38,7 +38,7 @@
                 },
                 {
                     "text": "Какое число является результатом выражения 2^10?",
-                    "image_path": null,
+                    "image_path": "ascii.png",
                     "answer": "1024"
                 },
                 {
@@ -53,22 +53,22 @@
                 },
                 {
                     "text": "Сколько битов информации содержит один мегабайт?",
-                    "image_path": null,
+                    "image_path": "kilobait.jpg",
                     "answer": "8388608"
                 },
                 {
                     "text": "Какое число является результатом выражения 2^8?",
-                    "image_path": null,
+                    "image_path": "kilobait.jpg",
                     "answer": "256"
                 },
                 {
                     "text": "Сколько символов может быть в кодировке Unicode?",
-                    "image_path": null,
+                    "image_path": "kilobait.jpg",
                     "answer": "1114112"
                 },
                 {
                     "text": "Какое число является результатом выражения 3^4?",
-                    "image_path": null,
+                    "image_path": "kilobait.jpg",
                     "answer": "81"
                 }
             ],
