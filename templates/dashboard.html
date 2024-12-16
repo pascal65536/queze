@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <title>Dashboard</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Welcome, {{ current_user.username }}!</h1>
     <p>
-        <strong>User ID:</strong> {{ current_user.id }}<br>
-        <strong>Level:</strong> {{ current_user.level }}
+      <strong>User ID:</strong> {{ current_user.id }}<br />
+      <strong>Level:</strong> {{ current_user.level }}
     </p>
 
     {% if current_user.level == 'admin' %}
@@ -18,22 +19,36 @@
         <h2>Your Dashboards</h2>
     {% endif %}
 
-    <ul>
-        {% for dashboard in dashboards %}
-            <li>
-                <strong>Theme:</strong> {{ dashboard.selected_theme }}<br>
-                <strong>Date:</strong> {{ dashboard.date }}<br>
-                <strong>User:</strong> {{ dashboard.user.username }} (ID: {{ dashboard.user.id }}, Level: {{ dashboard.user.level }})<br>
-                <strong>Results:</strong>
-                <ul>
-                    {% for result in dashboard.results %}
-                        <li>{{ result.name }}</li>
-                    {% endfor %}
-                </ul>
-            </li>
-        {% endfor %}
-    </ul>
-
     <a href="{{ url_for('logout') }}">Logout</a>
-</body>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>User</th>
+          <th>Class</th>
+          <th>Theme</th>
+          <th>total_value</th>
+          <th>result_count</th>
+          <th>average_value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dashboard in dashboards %}
+        <tr>
+          <td>{{ dashboard.date }}</td>
+          <td>
+            <strong>{{ dashboard.first_name }} {{ dashboard.second_name }}</strong>
+            ({{ dashboard.username }})
+          </td>
+          <td>{{ dashboard.class_name }}</td>
+          <td>{{ dashboard.selected_theme }}</td>
+          <td>{{ dashboard.total_value }}</td>
+          <td>{{ dashboard.result_count }}</td>
+          <td>{{ dashboard.average_value }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
 </html>

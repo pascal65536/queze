@@ -6,9 +6,12 @@ from flask_login import (
     logout_user,
     current_user,
 )
-from models import db, User, Dashboard, Result
+from sqlalchemy.sql import func
+from models import db, User, Dashboard, Result, dashboard_results
+from sqlalchemy import desc
 from forms import LoginForm
 from datetime import datetime
+import behoof as utils
 import os
 
 
@@ -33,9 +36,9 @@ def load_user(user_id):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(
-            username=form.username.data, password=form.password.data
-        ).first()
+        username = form.username.data
+        password = utils.get_md5hash(form.password.data)
+        user = User.query.filter_by(username=username, password=password).first()
         if user:
             login_user(user)
             flash("Авторизация выполнена успешно.")
@@ -53,14 +56,38 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route('/dashboard')
+@app.route("/dashboard")
 @login_required
 def dashboard():
-    if current_user.level == 'admin':
-        user_dashboards = Dashboard.query.join(User).all()
-    else:
-        user_dashboards = Dashboard.query.filter_by(user_id=current_user.id).join(User).all()
-    return render_template('dashboard.html', dashboards=user_dashboards)
+    # if current_user.level == "admin":
+    #     dashboards = Dashboard.query.join(User).all()
+    # else:
+    #     dashboards = (
+    #         Dashboard.query.filter_by(user_id=current_user.id).join(User).all()
+    #     )
+
+        
+    query = (
+        db.session.query(
+            Dashboard.date, 
+            User.id.label('user_id'),  
+            User.username, 
+            User.first_name, 
+            User.second_name,  
+            User.class_name,  
+            Dashboard.selected_theme,  
+            func.sum(Result.value).label('total_value'),  # Сумма значений result.value
+            func.count(Result.id).label('result_count'),  # Количество результатов
+            func.avg(Result.value).label('average_value')  # Среднее значение result.value
+        )
+        .join(User, User.id == Dashboard.user_id)  # Присоединяем таблицу User
+        .join(dashboard_results, dashboard_results.c.dashboard_id == Dashboard.id)  # Присоединяем таблицу dashboard_results
+        .join(Result, Result.id == dashboard_results.c.result_id)  # Присоединяем таблицу Result
+        .group_by(Dashboard.date, User.id, Dashboard.selected_theme)  # Группируем по дате, пользователю и теме
+        .order_by(desc(Dashboard.date))  # Сортируем по дате в порядке убывания
+    )
+    dashboards = query.all()
+    return render_template("dashboard.html", dashboards=dashboards)
 
 
 if __name__ == "__main__":
