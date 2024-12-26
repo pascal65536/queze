@@ -7,6 +7,7 @@ import datetime
 import string
 import random
 
+rus_alphabet = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 
 def load_json(folder_name, file_name):
     """
