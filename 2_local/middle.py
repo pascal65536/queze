@@ -151,13 +151,13 @@ class AuthorizationDialog(QDialog):
             is_valid = False
         elif not last_name:
             is_valid = False
-        elif len(last_name) < 4:
+        elif len(last_name) < 3:
             is_valid = False
         elif set(last_name.lower()) - set(behoof.rus_alphabet):
             is_valid = False
         elif not first_name:
             is_valid = False
-        elif len(first_name) < 4:
+        elif len(first_name) < 3:
             is_valid = False
         elif set(first_name.lower()) - set(behoof.rus_alphabet):
             is_valid = False
