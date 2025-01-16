@@ -4,6 +4,7 @@ from behoof import load_json, save_json, get_md5hash, calculate_md5
 import openpyxl
 import datetime
 import shutil
+import string
 
 
 def read_xlsx(folder_name, file_name):
@@ -44,6 +45,7 @@ def read_xlsx(folder_name, file_name):
                 print('Не найдено:', worksheet_title)
                 exit()
             this_dct.setdefault(worksheet_title, list())
+            char = 0
             for row in worksheet.iter_rows():
                 res = [c.value for c in row if c.value != None]
                 if not res:
@@ -65,6 +67,8 @@ def read_xlsx(folder_name, file_name):
                 local_dct.setdefault(key, list())
                 if key == "answers":
                     local_dct[key].append({"text": res[0], "weight": res[1]})
+                    local_dct['char'] = string.ascii_lowercase[char]
+                    char += 1
                     this_dct[worksheet_title].append(local_dct)
                     local_dct = dict()
                 elif key == "images":

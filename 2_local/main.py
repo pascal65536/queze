@@ -2,6 +2,7 @@ import re
 import os
 import sys
 import time
+import datetime
 import string
 import behoof
 import random
@@ -17,8 +18,6 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.data_dct = behoof.load_json('data', 'collection.json')
-        self.theme = None
-        self.title = None
         self.mashup = list()
         self.user = None
         self.initUI()
@@ -27,7 +26,8 @@ class MainWindow(QWidget):
         self.setWindowTitle('Локальная тестирующая система')
         self.resize(800, 600)
         # self.showFullScreen()
-        self.user = {'last_name': 'Зеленая', 'first_name': 'Римма', 'class_name': '11Ю', 'selected_theme': 'Это название теста'}
+
+        self.user = {'last_name': 'Инокентий', 'first_name': 'Смоктуновский', 'class_name': '11В', 'selected_theme': 'Промежуточная аттестация 8 класс', 'tests': [], 'mashup': None, 'date': '2025-01-16T10:43:20.029247'}
 
         if self.user is None:
             title = list()
@@ -37,11 +37,11 @@ class MainWindow(QWidget):
             return
         
         selected_theme = self.user.get('selected_theme')
+        self.setWindowTitle(f'{selected_theme} | {self.user.get("last_name")} {self.user.get("first_name")}')
+        
         for dl in self.data_dct.values():
             if dl.get('title') != selected_theme:
                 continue
-            self.theme = dl
-            self.title = dl['title']
 
             for tests in dl.get('tests', list()):
                 for mashup in dl['mashup']:
@@ -54,22 +54,40 @@ class MainWindow(QWidget):
             break
         
         self.layout = QVBoxLayout()
+
+        self.user_layout = QHBoxLayout()
         self.username_label = QLabel(f'Имя пользователя: {self.user.get("last_name")} {self.user.get("first_name")}')
-        self.layout.addWidget(self.username_label)
+        self.username_label.setFont(FONT)
+
+        self.user_layout.addWidget(self.username_label)
+        self.final_button = QPushButton('Закончить')
+        # self.final_button.setDisabled(True)
+        self.final_button.clicked.connect(self.on_final)
+        self.final_button.setFont(FONT)
+
+        self.user_layout.addWidget(self.final_button)
+        self.layout.addLayout(self.user_layout)
+
         self.time_layout = QHBoxLayout()
         self.current_time_label = QLabel('Текущее время: ')
+        self.current_time_label.setFont(FONT)
+
         self.time_layout.addWidget(self.current_time_label)
         self.start_time = time.time()
         self.app_time_label = QLabel('Время работы приложения: 0 секунд')
+        self.app_time_label.setFont(FONT)
+
         self.time_layout.addWidget(self.app_time_label)
         self.layout.addLayout(self.time_layout)
         self.tab_layout = QVBoxLayout()
         self.tab_widget = QTabWidget()
-
+        self.tab_widget.currentChanged.connect(self.on_tab_change)
+        
         self.tab_layout.addWidget(self.tab_widget)
         for idx, data in enumerate(self.mashup):
             tab = QWidget()
-            self.tab_widget.addTab(tab, f'Вопрос {idx + 1}', )
+            tab.name = data["char"]
+            self.tab_widget.addTab(tab, f'Вопрос {idx + 1} ({data["char"]})', )
             self.load_content_to_tab(tab, data)
         self.tab_widget.setStyleSheet(style.style_sheet)
 
@@ -91,6 +109,12 @@ class MainWindow(QWidget):
         self.timer.timeout.connect(self.update_time)
         self.timer.start(1000)
 
+
+    def on_tab_change(self, index):
+        # Этот метод вызывается при изменении текущей вкладки
+        print(f"Текущая вкладка изменена на: {self.tab_widget.tabText(index)}")
+
+
     def update_time(self):
         current_time = QTime.currentTime().toString('hh:mm:ss')
         self.current_time_label.setText(f'Текущее время: {current_time}')
@@ -101,10 +125,14 @@ class MainWindow(QWidget):
         self.question = string.ascii_uppercase.index(letter)
         self.load_content_from_json()
 
+    def on_final(self):
+        print(f'Пользователь зафиналил')
+
     def on_submit(self):
         user_input = self.input_field.text()
         print(f'Ответ пользователя: {user_input}')
         self.input_field.clear()
+        import ipdb; ipdb.sset_trace()
 
     def load_content_to_tab(self, tab, data):
         text = '\n'.join(data['question'])
@@ -137,7 +165,9 @@ class MainWindow(QWidget):
                 'last_name': dialog.last_name_input.text(),
                 'first_name': dialog.first_name_input.text(),
                 'class_name': dialog.class_input.text(),
-                'selected_theme': dialog.test_themes_combo.currentText()
+                'selected_theme': dialog.test_themes_combo.currentText(),
+                'tests': list(),
+                'date': datetime.datetime.now().isoformat()
             }
             self.initUI()
 
