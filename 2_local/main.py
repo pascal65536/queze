@@ -3,10 +3,13 @@ import os
 import sys
 import time
 import uuid
+import qrcode
 import string
 import behoof
 import random
 import datetime
+import requests
+from io import BytesIO
 from PyQt6.QtWidgets import (
     QFormLayout,
     QMessageBox,
@@ -24,9 +27,11 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QPixmap, QFont
 from PyQt6.QtCore import QTimer, QTime, Qt
-import style
+
 
 FONT = QFont(None, 16, QFont.Weight.Bold)
+
+style_sheet = "QTabBar::tab {width: 100px; font-weight: bold;}"
 
 
 class MainWindow(QWidget):
@@ -45,15 +50,15 @@ class MainWindow(QWidget):
         self.setWindowTitle("Локальная тестирующая система")
         self.resize(800, 600)
 
-        self.user = {
-            "last_name": "Воробей",
-            "first_name": "Джек",
-            "class_name": "11Ж",
-            "selected_theme": "Это название теста",
-            "tests": [],
-            "date": "2025-01-17T01:13:11.903253",
-            "uuid": "238dc614-e096-4d20-b1e2-d489a92b1cdc",
-        }
+        # self.user = {
+        #     "last_name": "Воробей",
+        #     "first_name": "Джек",
+        #     "class_name": "11Ж",
+        #     "selected_theme": "Это название теста",
+        #     "tests": [],
+        #     "date": "2025-01-17T01:13:11.903253",
+        #     "uuid": "238dc614-e096-4d20-b1e2-d489a92b1cdc",
+        # }
 
         if self.user is None:
             title = list()
@@ -92,7 +97,7 @@ class MainWindow(QWidget):
 
         self.user_layout.addWidget(self.username_label)
         self.final_button = QPushButton("Закончить")
-        # self.final_button.setDisabled(True)
+
         self.final_button.clicked.connect(self.on_final)
         self.final_button.setFont(FONT)
 
@@ -115,7 +120,7 @@ class MainWindow(QWidget):
         self.tab_widget.currentChanged.connect(self.on_tab_change)
 
         self.tab_layout.addWidget(self.tab_widget)
-        self.tab_widget.setStyleSheet(style.style_sheet)
+        self.tab_widget.setStyleSheet(style_sheet)
 
         self.input_layout = QHBoxLayout()
         self.input_field = QLineEdit()
@@ -135,7 +140,31 @@ class MainWindow(QWidget):
         self.timer.timeout.connect(self.update_time)
         self.timer.start(1000)
         self.load_content_to_tab_layout(self.mashup)
+        self.check_final()
 
+    def check_final(self):
+        uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
+        user_dct = dict()
+        for key in uuid_dct.keys():
+            name, char, test_value = key.split("|")
+            user_dct.setdefault(name, list()).append(char)
+        is_final = True
+        for mashup in self.mashup:
+            if mashup["char"] not in user_dct.get(mashup["theme"], list()):
+                is_final = False
+        self.final_button.setDisabled(not is_final)
+
+    def colorize(self, text):
+        # Заменить цвет фона
+        if len(text) == 0:
+            style = "background-color: white;"
+        else:
+            style = "background-color: lightblue;"
+        self.tab_widget.currentWidget().setStyleSheet(style)
+        # Обновление стиля
+        self.tab_widget.style().unpolish(self.tab_widget)
+        self.tab_widget.style().polish(self.tab_widget)
+        self.tab_widget.update()
 
     def on_tab_change(self, index):
         self.key = self.tab_widget.currentWidget().name
@@ -146,8 +175,10 @@ class MainWindow(QWidget):
 
         self.input_field.clear()
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
-        self.input_field.setText(uuid_dct.get(self.key, str()))
-        
+        user_input = uuid_dct.get(self.key, str())
+        self.input_field.setText(user_input)
+        self.colorize(user_input)
+        self.check_final()
 
     def update_time(self):
         current_time = QTime.currentTime().toString("hh:mm:ss")
@@ -156,23 +187,17 @@ class MainWindow(QWidget):
         self.app_time_label.setText(f"Время работы приложения: {app_time} секунд")
 
     def on_final(self):
-        print(f"Пользователь зафиналил")
+        self.hide()
+        self.result_window = ResultWindow(self.uuid, self.user, self.mashup)
+        self.result_window.show()
 
     def on_submit(self):
         user_input = self.input_field.text()
-        print(
-            f"Ответ пользователя: {user_input} {self.test_name} {self.test_char} {self.test_value}"
-        )
-        for test_value in self.test_value.split("?"):
-            q, a = test_value.split(":")
-            if q == user_input:
-                print(f"Правильно")
-        # self.input_field.clear()
-        # import ipdb; ipdb.sset_trace()
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
         uuid_dct[self.key] = user_input
         behoof.save_json("user", f"{self.uuid}.json", uuid_dct)
-
+        self.colorize(user_input)
+        self.check_final()
 
     def load_content_to_tab_layout(self, mashup):
         for idx, data in enumerate(mashup):
@@ -219,6 +244,111 @@ class MainWindow(QWidget):
                 "uuid": str(uuid.uuid4()),
             }
             self.initUI()
+
+
+class ResultWindow(QWidget):
+    def __init__(self, uuid, user, mashup):
+        super().__init__()
+        self.uuid = uuid
+        self.user = user
+        self.mashup = mashup
+        self.url = self.calc()
+
+        self.setWindowTitle("Second Window")
+        self.setGeometry(150, 150, 400, 300)
+
+        self.layout = QVBoxLayout()
+
+        self.name_label = QLabel(uuid, self)
+        self.name_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        self.layout.addWidget(self.name_label)
+
+        self.score_label = QLabel("Количество баллов: 100", self)
+        self.layout.addWidget(self.score_label)
+
+        # Генерация QR-кода
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(self.url)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill='black', back_color='white')
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        pixmap = QPixmap()
+        pixmap.loadFromData(buffered.getvalue())
+
+        self.qr_label = QLabel(self)
+        self.qr_label.setPixmap(pixmap)
+        self.layout.addWidget(self.qr_label)
+
+        self.close_button = QPushButton("Закрыть", self)
+        self.close_button.clicked.connect(self.close)
+        self.layout.addWidget(self.close_button)
+
+        self.setLayout(self.layout)
+
+
+    def calc(self):
+        uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
+        user_dct = dict()
+        for key, value in uuid_dct.items():
+            name, char, test_value = key.split("|")
+            for mashup in self.mashup:
+                if mashup["theme"] != name:
+                    continue
+                if mashup["char"] != char:
+                    continue
+
+                if value == test_value.split(":")[0]:
+                    result = char.upper()
+                else:
+                    result = char.lower()
+                user_dct.setdefault(name, list()).append(result)
+        
+        tests = list()
+        for key in user_dct.keys():
+            tests.append(
+                {
+                    "theme": key, 
+                    "selected": "".join(user_dct[key])
+                }
+            )             
+
+        user_data = {
+            "last_name": self.user["last_name"],
+            "first_name": self.user["first_name"],
+            "class_name": self.user["class_name"],
+            "selected_theme": self.user["selected_theme"],
+            "date": self.user["date"],
+            "tests": tests,
+        }
+        user_data["mashup"] = "|".join(
+            [f"{test['theme']}_{test['selected']}" for test in user_data["tests"]]
+        )
+        return self.get_url(user_data)
+
+
+    def get_url(self, ud):
+        # Базовый URL
+        base_url = 'http://127.0.0.1:5000/get_data?'
+
+        # Создание словаря с параметрами
+        params = {
+            'mashup': ud['mashup'],
+            'date': ud['date'],
+            'selected_theme': ud['selected_theme'],
+            'class_name': ud['class_name'],
+            'first_name': ud['first_name'],
+            'last_name': ud['last_name']
+        }
+        # Формирование полного URL с параметрами
+        full_url = base_url + requests.compat.urlencode(params)
+        return full_url
 
 
 class AuthorizationDialog(QDialog):
