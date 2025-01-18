@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+{% if current_user.role == "admin" %}
+<p><a href="/register">Регистрация пользователя</a></p>
+<p><a href="/result">Результаты учеников</a></p>
+{% elif current_user.role == "teacher" %}
+<p><a href = "/result">Результаты учеников</a></p>
+{% endif %}
+
+</body>
+</html>

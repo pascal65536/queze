@@ -1,0 +1,68 @@
+{
+     "0": {
+          "username": "superuser",
+          "password": "25f9e794323b453885f5181f1b624d0b",
+          "role": "admin",
+          "link_class": [
+               
+          ]
+     },
+     "2": {
+          "username": "teacher",
+          "password": "25f9e794323b453885f5181f1b624d0b",
+          "role": "teacher",
+          "link_class": [
+               "10А",
+               "11А"
+          ]
+     },
+     "3": {
+          "username": "Петя Рора",
+          "password": "25f9e794323b453885f5181f1b624d0b",
+          "role": "student",
+          "link_class": [
+               "11А"
+          ]
+     },
+     "4": {
+          "username": "teacher_two",
+          "password": "25f9e794323b453885f5181f1b624d0b",
+          "role": "teacher",
+          "link_class": [
+               "11А"
+          ]
+     },
+     "5": {
+          "username": "Костя Григор",
+          "password": "5f4dcc3b5aa765d61d8327deb882cf99",
+          "role": "teacher",
+          "link_class": [
+               "11А"
+          ]
+     },
+     "6": {
+          "username": "Константин Григор",
+          "password": "25f9e794323b453885f5181f1b624d0b",
+          "role": "teacher",
+          "link_class": [
+               "11А"
+          ]
+     },
+     "7": {
+          "username": "ОЛЕГ Григор",
+          "password": "25f9e794323b453885f5181f1b624d0b",
+          "role": "student",
+          "link_class": [
+               "11А"
+          ]
+     },
+     "8": {
+          "username": "Ivanovna",
+          "password": "a0d5caed6e9eee99f3d529e0b230affb",
+          "role": "teacher",
+          "link_class": [
+               "7К",
+               "8Л"
+          ]
+     }
+}

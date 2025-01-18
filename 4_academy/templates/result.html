@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Информация о всех учениках</title>
+    <!-- Подключение CSS Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        /* ==Стили для отображения деталей == */
+        /* Стили для скрытых деталей класса */
+        .class-details {
+            display: none; /* Скрываем блок по умолчанию */
+            margin-top: 10px; /* Отступ сверху */
+            border: 1px solid #ddd; /* Рамка */
+            padding: 10px; /* Внутренние отступы */
+            background-color: #f9f9f9; /* Цвет фона */
+             max-width: 100%; /* Максимальная ширина, чтобы не вылезал за родительский блок */
+             overflow-x: auto;
+        }
+        /* Стили для скрытых деталей ученика */
+         .student-details {
+            display: none; /* Скрываем блок по умолчанию */
+            margin-top: 5px; /* Отступ сверху */
+            border: 1px solid #eee; /* Рамка */
+            padding: 5px; /* Внутренние отступы */
+            background-color: #f0f0f0; /* Цвет фона */
+            max-width: 100%; /* Максимальная ширина, чтобы не вылезал за родительский блок */
+            overflow-x: auto;
+        }
+        /* == Стили для кнопок == */
+        /* Стиль для кнопок confirm-button (основан на предыдущих стилях, но улучшен) */
+       .confirm-button {
+            position: relative; /* Для позиционирования псевдоэлемента */
+            background-color: #4CAF50; /* Зеленый цвет фона */
+            border: none; /* Убираем рамку */
+            color: white; /* Белый цвет текста */
+            padding: 10px 20px; /* Отступы */
+            text-align: center; /* Выравнивание текста по центру */
+            text-decoration: none; /* Убираем подчеркивание */
+            display: inline-block; /* Делаем кнопку блочным элементом */
+            font-size: 14px; /* Размер шрифта */
+            margin: 4px 2px; /* Отступы */
+            cursor: pointer; /* Меняем курсор на "руку" */
+            border-radius: 25px; /* Закругление углов */
+            overflow: hidden; /* Скрываем выходящие за пределы кнопки элементы */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Анимация */
+        }
+        /* Псевдоэлемент для эффекта подсветки */
+         .confirm-button:before {
+            content: ''; /* Пустой контент */
+            position: absolute; /* Абсолютное позиционирование */
+            top: 50%; /* Позиционирование по вертикали */
+            left: 50%; /* Позиционирование по горизонтали */
+            width: 300%; /* Ширина */
+            height: 300%; /* Высота */
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.5), rgba(0, 255, 0, 0.5), rgba(0, 0, 255, 0.5), rgba(255, 0, 255, 0.5)); /* Градиент */
+            border-radius: 50%; /* Закругление углов */
+            transform: translate(-50%, -50%) scale(0); /* Начальное состояние - спрятан */
+            transition: transform 0.5s ease; /* Анимация */
+            z-index: 0; /* Помещаем под кнопку */
+        }
+        /* Эффект при наведении */
+         .confirm-button:hover:before {
+            transform: translate(-50%, -50%) scale(1); /* Увеличиваем масштаб */
+        }
+        /* Эффект при наведении */
+         .confirm-button:hover {
+            background-color: #45a049; /* Затемняем фон */
+            transform: translateY(-2px); /* Небольшой сдвиг вверх */
+        }
+        /* Эффект при нажатии */
+         .confirm-button:active {
+            transform: translateY(0); /* Возвращаем в исходное положение */
+        }
+        /* Эффект при наведении */
+         .confirm-button:hover {
+            z-index: 1; /* Помещаем над подсветкой */
+        }
+        /* == Стили для таблицы == */
+        /* Стили для таблицы с учениками */
+         .students-table {
+            padding-left: 15px; /* Отступ слева */
+            padding-right: 15px; /* Отступ справа */
+             overflow-x: auto;
+        }
+        /* Общие стили для кнопок download-button и stud-button */
+        .download-button, .stud-button, .logout-button {
+          padding: 10px 20px; /* Отступы */
+          border: none; /* Убираем рамку */
+          border-radius: 5px; /* Закругление углов */
+          cursor: pointer; /* Курсор "рука" */
+          text-decoration: none; /* Убираем подчеркивание */
+          display: inline-block; /* Блочный элемент */
+          font-size: 14px; /* Размер шрифта */
+        }
+        /* Стили для кнопки скачивания */
+         .download-button {background-color: #4CAF50; color: white;} /* Зеленый фон, белый текст */
+        .download-button:hover {background-color: #367c39;} /* Затемненный фон при наведении */
+        /* Стили для кнопки с именем ученика */
+        .stud-button {
+             /* Используем стили confirm-button для кнопки с именем ученика */
+            position: relative; /* Для позиционирования псевдоэлемента */
+            background-color: #4CAF50; /* Зеленый цвет фона */
+            border: none; /* Убираем рамку */
+            color: white; /* Белый цвет текста */
+            padding: 10px 20px; /* Отступы */
+            text-align: center; /* Выравнивание текста по центру */
+            text-decoration: none; /* Убираем подчеркивание */
+            display: inline-block; /* Делаем кнопку блочным элементом */
+            font-size: 14px; /* Размер шрифта */
+            margin: 4px 2px; /* Отступы */
+            cursor: pointer; /* Меняем курсор на "руку" */
+            border-radius: 25px; /* Закругление углов */
+            overflow: hidden; /* Скрываем выходящие за пределы кнопки элементы */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Анимация */
+        }
+       /* Псевдоэлемент для эффекта подсветки */
+         .stud-button:before {
+            content: ''; /* Пустой контент */
+            position: absolute; /* Абсолютное позиционирование */
+            top: 50%; /* Позиционирование по вертикали */
+            left: 50%; /* Позиционирование по горизонтали */
+            width: 300%; /* Ширина */
+            height: 300%; /* Высота */
+            background: linear-gradient(45deg, rgba(255, 0, 0, 0.5), rgba(0, 255, 0, 0.5), rgba(0, 0, 255, 0.5), rgba(255, 0, 255, 0.5)); /* Градиент */
+            border-radius: 50%; /* Закругление углов */
+            transform: translate(-50%, -50%) scale(0); /* Начальное состояние - спрятан */
+            transition: transform 0.5s ease; /* Анимация */
+            z-index: 0; /* Помещаем под кнопку */
+        }
+        /* Эффект при наведении */
+         .stud-button:hover:before {
+            transform: translate(-50%, -50%) scale(1); /* Увеличиваем масштаб */
+        }
+        /* Эффект при наведении */
+         .stud-button:hover {
+            background-color: #45a049; /* Затемняем фон */
+            transform: translateY(-2px); /* Небольшой сдвиг вверх */
+        }
+        /* Эффект при нажатии */
+         .stud-button:active {
+            transform: translateY(0); /* Возвращаем в исходное положение */
+        }
+        /* Эффект при наведении */
+         .stud-button:hover {
+            z-index: 1; /* Помещаем над подсветкой */
+        }
+         /* Стили для кнопки выхода (как у скачивания) */
+         .logout-button {background-color: #4CAF50; color: white;} /* Зеленый фон, белый текст */
+         .logout-button:hover {background-color: #367c39;} /* Затемненный фон при наведении */
+          /* == Стили для фейерверка == */
+         .fireworks-container {
+            position: absolute; /* Абсолютное позиционирование */
+            top: 0; /* Верхний край */
+            left: 0; /* Левый край */
+            width: 100%; /* Ширина контейнера */
+            height: 100%; /* Высота контейнера */
+            pointer-events: none; /* Игнорировать события мыши */
+            overflow: hidden; /* Скрываем выходящие за контейнер частицы */
+            z-index: 1001;
+        }
+        .firework-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+            pointer-events: none;
+        }
+        /* Стиль для кнопки подробнее */
+        .button-diamond { 
+            display: inline-block; 
+            padding: 20px 30px; 
+            background-color: rgba(255, 255, 255, 0); 
+            color: white; 
+            text-decoration: none; 
+            font-size: 16px; 
+            border: none; 
+            cursor: pointer;
+            margin-top: 25px; 
+            margin-bottom: 30px;
+
+            position: relative; 
+            transform: perspective(500px) rotateX(0deg) rotate(45deg); 
+            transition: transform 0.3s ease; 
+            overflow: hidden; 
+            animation: rotateButton 1s linear infinite; /* Добавлена анимация вращения */ 
+        } 
+         @keyframes rotateButton { 
+           from{ 
+            transform: perspective(500px) rotateX(0deg) rotate(45deg) rotateZ(0deg); 
+           } 
+           to{ 
+            transform: perspective(500px) rotateX(0deg) rotate(45deg) rotateZ(360deg); 
+           } 
+         } 
+         
+        .button-diamond::before { 
+            content: ''; 
+            position: absolute; 
+            top: -2px; 
+            left: -2px; 
+            right: -2px; 
+            bottom: -2px; 
+            border: 3px solid transparent; 
+            background-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); 
+            background-size: 200% 200%; 
+             background-clip: padding-box; 
+            -webkit-background-clip: padding-box; 
+            z-index: -2; 
+            animation: rainbow-border 4s linear infinite; 
+           transform: rotate(-45deg); 
+        } 
+         
+         .button-diamond::after { 
+             content: ""; 
+             position: absolute; 
+             top:0px; 
+             left: 0px; 
+             right: 0px; 
+             bottom:0px; 
+             background-color: rgba(0,0,0, 0.2); 
+             z-index: -1; 
+             transform: rotate(-45deg); 
+         } 
+ 
+        @keyframes rainbow-border { 
+        0% { background-position: 0 0; } 
+        100% { background-position: 100% 100%; } 
+        } 
+ 
+ 
+        .button-diamond:hover { 
+           transform: perspective(500px) rotateX(5deg) rotate(45deg); 
+         } 
+          
+         .button-diamond-container{ 
+           display: flex; 
+           justify-content: center; 
+           align-items: center; 
+           min-height: 100vh; 
+         } 
+         audio{
+            display: none;
+          }
+    </style>
+</head>
+<body style="background-color: #ddd; background-image: url('uploads/5c60601a48f22168d87766bb.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; margin: 0;">
+    <!-- == Контейнер для фейерверка == -->
+    <div class="fireworks-container"></div>
+    <!-- == Основной контейнер == -->
+    <div class="container mt-4">
+         <div class="row">  <!--выравнивания элементов -->
+            <!-- == Карточка профиля пользователя == -->
+            <div class="col-md-8">  <!-- Колонка для карточки профиля, занимает 8 из 12 колонок на средних экранах и больше -->
+                <div class="card mb-3">  <!--  отступом снизу -->
+                   <div class="row g-0">  <!--  выравнивания изображения и текста -->
+                       <div class="col-md-4">
+                           <!-- Изображение пользователя -->
+                           {% if current_user.role == 'admin' %}
+                                <img src="uploads/бэтмен.jpg" class="img-fluid rounded-start" alt="Аватар администратора">
+                            {% elif current_user.role == 'teacher' %}
+                                <img src="uploads/M8itHV4gR7w.jpg" class="img-fluid rounded-start" alt="Аватар преподавателя">
+                            {% elif current_user.role == 'student' %}
+                                <img src="uploads/E5eVwAYmEnw.jpg" class="img-fluid rounded-start" alt="Аватар студента">
+                                {% endif %}
+                       </div>
+                       <div class="col-md-8 position-relative">
+                           <div class="card-body">
+                               <h5 class="card-title">{{ current_user.username }}</h5>  <!-- Имя пользователя -->
+
+  <a href="/logout" class="btn confirm-button position-absolute bottom-0 end-0 m-3">Выйти</a>
+                           </div>
+                       </div>
+                   </div>
+                </div>
+            </div>
+            <!-- == Карточка с кнопками действий == -->
+            <div class="col-md-4">  <!-- Колонка для карточки действий, занимает 4 из 12 колонок на средних экранах и больше -->
+                <div class="col-md-auto d-inline-block">  <!--  auto ширина -->
+<div class="card"style="width: 18rem; background-color: transparent; border: none;">  <!-- Карточка действий -->
+ {% if current_user.role != "student" %}
+ <button class="btn confirm-button" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Фильтр</button>
+ {% endif %}
+<a href="{{ url_for('download_csv')}}" class="btn confirm-button">Скачать</a>
+ {% if current_user.role == "admin" %}
+<a href="{{ url_for('register')}}" class="btn confirm-button">Добавить пользователя</a>
+{% endif %}
+</div>
+</div>
+</div>
+</div>
+ </div>
+
+ <!-- == Offcanvas для фильтрации === -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+<div class="offcanvas-header">
+ <h5 class="offcanvas-title" id="offcanvasRightLabel">Фильтры</h5>
+<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+ </div>
+<div class="offcanvas-body">
+ <!-- ==Форма фильтрации == -->
+<form method="POST">
+<div class="mb-3">
+<!-- Выпадающий список для выбора класса -->
+<label for="school_class" class="form-label">Класс</label>
+<select name="school_class" class="form-select">
+<option value="">Все классы</option>
+ {% for class in link_classes %}
+  <option value="{{ class }}">{{ class }}</option>
+  {% endfor %}
+ </select>
+ </div>
+<div class="mb-3">
+ <!-- Выпадающий список для выбора метода сортировки -->
+ <label for="sort_method" class="form-label">Сортировать по</label>
+ <select name="sort_method" class="form-select">
+  <option value="sort-date">Дате</option> 
+<option value="sort-fio">ФИО</option>  
+<option value="sort-percent">Проценту ответов</option>
+    </select>
+ </div>
+<div class="mb-3">
+<!-- Радиокнопки для выбора направления сортировки -->
+ <label class="form-label">Направление сортировки</label>
+ <div class="form-check">
+    <input type="radio" name="sort" value="sort-reverse" class="form-check-input">
+   <label class="form-check-label">Прямая сортировка</label>  
+    </div>
+  <div class="form-check">
+   <input type="radio" name="sort" value="sort-ahead" checked class="form-check-input">
+<label class="form-check-label">Обратная сортировка</label>  
+ </div>
+</div>
+<div class="mb-3">
+<!-- Поле ввода для поиска по имени -->
+<label for="search_query" class="form-label">Поиск по имени</label>
+ <input type="text" name="search_query" placeholder="Поиск по имени" class="form-control" value="{{ search_query or '' }}">
+</div>
+  <button type="submit" class="btn confirm-button">Применить</button>
+</form>
+</div>
+    </div>
+    <!-- == Таблица с результатами == -->
+    <div class="students-table" >  
+        <div class="table-responsive"> <!-- прокрутка таблицы -->
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Ученик</th>
+                    </tr>
+                </thead>
+                <tbody> <!-- Тело таблицы -->
+                    {% for class_id, student in classes.items() %}
+                        {% for student_name, tests in student.items() %}
+                            <tr>
+                                <td>
+                                    <!-- Кнопка для отображения деталей ученика -->
+                                    <button onclick="showMoreDetails('{{ class_id }}-{{ student_name }}');" class="stud-button">{{ student_name }}</button>
+                                     <!-- Скрытый блок с деталями ученика -->
+                                    <div id="{{ class_id }}-{{ student_name }}" class="student-details" style="margin-top: 10px; padding: 10px; border: 1px solid #c8e6c9; border-radius: 4px; background-color: #f1f8e9; display: none;">
+                                        <div class="details-content">
+                                            <p><strong>Класс:</strong> {{ class_id }}</p>
+                                            {% for test in tests %} 
+                                                <p><strong>Вид теста:</strong> {{ test['Вид теста'] }}</p> 
+                                                <p><strong>Дата проведения:</strong> {{ test["Дата"] }}</p> 
+                                                <p><strong>Процент решенния:</strong> {{ test["Правильные ответы"] }}</p> 
+                                                {% set test_id = test["id"] %}
+                                                 <!-- Кнопка для отображения подробностей теста -->
+                                                 <button type="button" class="button-diamond" onclick="showMoreDetails('{{ class_id }}-{{ student_name }}-{{ test_id }}')">Подробнее</button>
+                                                <!-- Скрытый блок с подробностями теста -->
+                                                <div id="{{ class_id }}-{{ student_name }}-{{ test_id }}" class="more-details" style="display: none; margin-top: 15px;">
+                                                    {% for key, info in test.items() %}
+                                                        {% if key not in ["Вид теста", "Правильные ответы", "Дата", "id"] %}
+                                                            <p><strong>{{ key }}:</strong> {{ info }}</p>  <!-- Вывод дополнительных данных теста -->
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                <hr> <!-- Разделитель между тестами -->
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                 </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Подключение JavaScript Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+     <script>
+        // Функция для отображения/скрытия деталей элемента
+        function showMoreDetails(studentId) {
+            var detailsDiv = document.getElementById(studentId);
+            if (detailsDiv) {
+                detailsDiv.style.display = detailsDiv.style.display === "none" ? "block" : "none";
+            }
+        }
+         document.addEventListener('DOMContentLoaded', function() {
+            // Получаем контейнер для фейерверка из HTML по классу 'fireworks-container'
+            const fireworksContainer = document.querySelector('.fireworks-container');
+
+            // Получаем все кнопки с классом 'confirm-button' и 'stud-button'
+            const confirmButtons = document.querySelectorAll('.confirm-button');
+            const studButtons = document.querySelectorAll('.stud-button');
+
+
+            // Для каждой кнопки добавляем слушатель события 'click'
+            confirmButtons.forEach(button => {
+                button.addEventListener('click', function(event) {
+                    // Получаем координаты кнопки
+                    const buttonRect = button.getBoundingClientRect();
+                    // Вычисляем координаты центра кнопки
+                    const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+                    const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+
+                    // Запускаем создание 20 частиц фейерверка
+                    for (let i = 0; i < 20; i++) {
+                        createFireworkParticle(buttonCenterX, buttonCenterY, fireworksContainer);
+                    }
+                });
+            });
+             // Для каждой кнопки ученика добавляем слушатель события 'click'
+            studButtons.forEach(button => {
+                button.addEventListener('click', function(event) {
+                    const buttonRect = button.getBoundingClientRect();
+                    const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+                    const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+
+                     for (let i = 0; i < 20; i++) {
+                         createFireworkParticle(buttonCenterX, buttonCenterY, fireworksContainer);
+                     }
+                });
+            });
+           
+           /**
+             * Функция для создания частицы фейерверка.
+             * @param {number} x - X координата центра кнопки.
+             * @param {number} y - Y координата центра кнопки.
+             * @param {HTMLElement} container - Контейнер для частиц фейерверка.
+             */
+            function createFireworkParticle(x, y, container) {
+                // Создаем элемент div для частицы
+                const particle = document.createElement('div');
+                particle.classList.add('firework-particle');
+                // Устанавливаем начальное положение частицы
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                // Добавляем частицу в контейнер фейерверка
+                container.appendChild(particle);
+
+                // Задаем случайный угол вылета частицы
+                const angle = Math.random() * Math.PI * 2;
+                // Задаем случайную скорость вылета частицы
+                const speed = 2 + Math.random() * 4;
+                // Вычисляем горизонтальную скорость частицы
+                const vx = Math.cos(angle) * speed;
+                // Вычисляем вертикальную скорость частицы
+                const vy = Math.sin(angle) * speed;
+                // Задаем гравитацию для имитации падения частицы
+                const gravity = 0.1;
+                // Задаем время жизни частицы
+                let lifeTime = 120 + Math.random() * 100;
+
+
+                 /**
+                 * Функция для анимации частицы.
+                 */
+                function animateParticle() {
+                    // Если время жизни частицы истекло
+                    if (lifeTime <= 0) {
+                        // Удаляем частицу из DOM
+                        particle.remove();
+                        return; // Завершаем анимацию
+                    }
+
+                     // Уменьшаем время жизни частицы на 1
+                     lifeTime--;
+                    // Обновляем X координату частицы с учетом горизонтальной скорости
+                    x += vx;
+                    // Обновляем Y координату частицы с учетом вертикальной скорости и гравитации
+                     y += vy + gravity;
+
+                    // Устанавливаем новое положение частицы
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+
+                    // Запускаем следующий кадр анимации
+                    requestAnimationFrame(animateParticle);
+                }
+
+                // Запускаем анимацию частицы
+                animateParticle();
+            }
+        });
+    </script>
+
+    <audio id="backgroundMusic" autoplay loop>
+        <source src="uploads/music/Bangarang.mp3" type="audio/mpeg">
+
+    </audio>
+</body>
+</html>
