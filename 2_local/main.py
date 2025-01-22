@@ -3,13 +3,12 @@ import os
 import sys
 import time
 import uuid
-import qrcode
 import string
 import behoof
 import random
 import datetime
-import requests
 from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont
 from PyQt6.QtWidgets import (
     QFormLayout,
     QMessageBox,
@@ -64,8 +63,8 @@ class MainWindow(QWidget):
             title = list()
             for dl in self.data_dct.values():
                 title.append(dl["title"])
-            self.show_modal_window(title)
-            return
+            if not self.show_modal_window(title):
+                sys.exit()
 
         self.uuid = self.user.get("uuid")
         last_name = self.user.get("last_name")
@@ -244,58 +243,78 @@ class MainWindow(QWidget):
                 "uuid": str(uuid.uuid4()),
             }
             self.initUI()
+            return True
+        return False
 
 
 class ResultWindow(QWidget):
     def __init__(self, uuid, user, mashup):
         super().__init__()
+
         self.uuid = uuid
         self.user = user
         self.mashup = mashup
-        self.url = self.calc()
+        self.score, self.count = self.calc_score()
+        self.round_score = round(self.score / self.count, 2)
 
-        self.setWindowTitle("Second Window")
+        self.setWindowTitle(f"Результаты теста")
         self.setGeometry(150, 150, 400, 300)
+
+        last_name = self.user.get("last_name")
+        first_name = self.user.get("first_name")
+        selected_theme = self.user.get("selected_theme")
+        class_name = self.user.get("class_name")
 
         self.layout = QVBoxLayout()
 
-        self.name_label = QLabel(uuid, self)
-        self.name_label.setStyleSheet("font-size: 20px; font-weight: bold;")
-        self.layout.addWidget(self.name_label)
+        self.user_layout = QHBoxLayout()
+        text = f"Пользователь: {last_name} {first_name}"
+        self.name_label = QLabel(text, self)
+        self.name_label.setFont(FONT)
+        self.user_layout.addWidget(self.name_label)
+        text = f"Количество баллов: {self.round_score}"
+        self.score_label = QLabel(text, self)
+        self.score_label.setFont(FONT)
+        self.user_layout.addWidget(self.score_label)
+        self.layout.addLayout(self.user_layout)
 
-        self.score_label = QLabel("Количество баллов: 100", self)
-        self.layout.addWidget(self.score_label)
+        self.test_layout = QHBoxLayout()
+        text = f"Тема теста: {selected_theme}"
+        self.test_label = QLabel(text, self)
+        self.test_label.setFont(FONT)
+        self.test_layout.addWidget(self.test_label)
+        text = f"Верных ответов: {self.score}"
+        self.score_label = QLabel(text, self)
+        self.score_label.setFont(FONT)
+        self.test_layout.addWidget(self.score_label)
+        self.layout.addLayout(self.test_layout)
 
-        # Генерация QR-кода
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(self.url)
-        qr.make(fit=True)
+        self.score_layout = QHBoxLayout()
+        text = f"Класс: {class_name}"
+        self.class_label = QLabel(text, self)
+        self.class_label.setFont(FONT)
+        self.score_layout.addWidget(self.class_label)
+        text = f"Задано вопросов: {self.count}"
+        self.count_label = QLabel(text, self)
+        self.count_label.setFont(FONT)
+        self.score_layout.addWidget(self.count_label)
+        self.layout.addLayout(self.score_layout)
 
-        img = qr.make_image(fill='black', back_color='white')
-        buffered = BytesIO()
-        img.save(buffered, format="PNG")
-        pixmap = QPixmap()
-        pixmap.loadFromData(buffered.getvalue())
-
-        self.qr_label = QLabel(self)
-        self.qr_label.setPixmap(pixmap)
-        self.layout.addWidget(self.qr_label)
+        self.pic_label = QLabel(self)
+        self.pic_label.setPixmap(self.get_pixmap())
+        self.layout.addWidget(self.pic_label)
 
         self.close_button = QPushButton("Закрыть", self)
+        self.close_button.setFont(FONT)
         self.close_button.clicked.connect(self.close)
         self.layout.addWidget(self.close_button)
 
         self.setLayout(self.layout)
 
-
-    def calc(self):
+    def calc_score(self):
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
-        user_dct = dict()
+        score = 0
+        count = 0
         for key, value in uuid_dct.items():
             name, char, test_value = key.split("|")
             for mashup in self.mashup:
@@ -303,52 +322,34 @@ class ResultWindow(QWidget):
                     continue
                 if mashup["char"] != char:
                     continue
-
+                count += 1
                 if value == test_value.split(":")[0]:
-                    result = char.upper()
-                else:
-                    result = char.lower()
-                user_dct.setdefault(name, list()).append(result)
-        
-        tests = list()
-        for key in user_dct.keys():
-            tests.append(
-                {
-                    "theme": key, 
-                    "selected": "".join(user_dct[key])
-                }
-            )             
+                    score += int(test_value.split(":")[1])
+        return score, count
 
-        user_data = {
-            "last_name": self.user["last_name"],
-            "first_name": self.user["first_name"],
-            "class_name": self.user["class_name"],
-            "selected_theme": self.user["selected_theme"],
-            "date": self.user["date"],
-            "tests": tests,
-        }
-        user_data["mashup"] = "|".join(
-            [f"{test['theme']}_{test['selected']}" for test in user_data["tests"]]
-        )
-        return self.get_url(user_data)
+    def get_pixmap(self):
+        width, height = 800, 800
+        image = Image.new("RGB", (width, height), "white")
+        draw = ImageDraw.Draw(image)
+        try:
+            fnt = os.path.join("fonts", "Krasnoyarsk.otf")
+            font = ImageFont.truetype(fnt, 300)
+        except IOError:
+            font = ImageFont.load_default()
+        text = str(self.round_score)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        x = (width - text_width) // 2
+        y = (height - text_height) // 2
+        draw.text((x, y), text, fill="black", font=font)
+        buffered = BytesIO()
+        image.save(buffered, format="PNG")
+        pixmap = QPixmap()
+        pixmap.loadFromData(buffered.getvalue())
+        return pixmap
 
 
-    def get_url(self, ud):
-        # Базовый URL
-        base_url = 'http://127.0.0.1:5000/get_data?'
-
-        # Создание словаря с параметрами
-        params = {
-            'mashup': ud['mashup'],
-            'date': ud['date'],
-            'selected_theme': ud['selected_theme'],
-            'class_name': ud['class_name'],
-            'first_name': ud['first_name'],
-            'last_name': ud['last_name']
-        }
-        # Формирование полного URL с параметрами
-        full_url = base_url + requests.compat.urlencode(params)
-        return full_url
 
 
 class AuthorizationDialog(QDialog):
