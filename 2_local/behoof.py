@@ -1,7 +1,6 @@
 import os
 import json
 import uuid
-import shutil
 import hashlib
 import datetime
 import string
