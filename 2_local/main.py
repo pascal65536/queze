@@ -276,6 +276,7 @@ class ResultWindow(QWidget):
         self.name_label.setFont(FONT)
         self.user_layout.addWidget(self.name_label)
         text = f"Количество процентов: {self.round_score}"
+        text = f"Количество процентов: {self.round_score}"
         self.score_label = QLabel(text, self)
         self.score_label.setFont(FONT)
         self.user_layout.addWidget(self.score_label)
@@ -336,6 +337,7 @@ class ResultWindow(QWidget):
         draw = ImageDraw.Draw(image)
         try:
             fnt = os.path.join("fonts", "Krasnoyarsk.otf")
+            font = ImageFont.truetype(fnt, 200)
             font = ImageFont.truetype(fnt, 200)
         except IOError:
             font = ImageFont.load_default()
