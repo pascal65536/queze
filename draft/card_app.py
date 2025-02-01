@@ -7,6 +7,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 import markdown2
 
+
+
+
+
 class CardApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -59,6 +63,7 @@ class CardApp(QMainWindow):
         markdown_text = self.text_edit.toPlainText()
         html = markdown2.markdown(markdown_text)
         self.preview_label.setText(html)
+
 
     def load_image(self):
         options = QFileDialog.Options()

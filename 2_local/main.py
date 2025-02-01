@@ -49,15 +49,16 @@ class MainWindow(QWidget):
         self.setWindowTitle("Локальная тестирующая система")
         self.resize(800, 600)
 
-        # self.user = {
-        #     "last_name": "Воробей",
-        #     "first_name": "Джек",
-        #     "class_name": "11Ж",
-        #     "selected_theme": "Это название теста",
-        #     "tests": [],
-        #     "date": "2025-01-17T01:13:11.903253",
-        #     "uuid": "238dc614-e096-4d20-b1e2-d489a92b1cdc",
-        # }
+        self.user = {
+            "last_name": "Воробей",
+            "first_name": "Джек",
+            "class_name": "11Ж",
+            "selected_theme": "Это название теста",
+            "tests": [],
+            "date": "2025-01-17T01:13:11.903253",
+            "uuid": str(uuid.uuid4()),
+            # "uuid": "238dc614-e096-4d20-b1e2-d489a92b1cdc",
+        }
 
         if self.user is None:
             title = list()
@@ -122,11 +123,12 @@ class MainWindow(QWidget):
         self.tab_widget.setStyleSheet(style_sheet)
 
         self.input_layout = QHBoxLayout()
-        self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("Введите ваш ответ здесь...")
-        self.input_field.setFont(FONT)
 
-        self.input_layout.addWidget(self.input_field)
+        self.input_line = QLineEdit()
+        self.input_line.setPlaceholderText("Введите ваш ответ здесь...")
+        self.input_line.setFont(FONT)
+
+        self.input_layout.addWidget(self.input_line)        
         self.submit_button = QPushButton("Отправить")
         self.submit_button.clicked.connect(self.on_submit)
         self.submit_button.setFont(FONT)
@@ -172,10 +174,10 @@ class MainWindow(QWidget):
         self.test_char = char
         self.test_value = value
 
-        self.input_field.clear()
+        self.input_line.clear()
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
         user_input = uuid_dct.get(self.key, str())
-        self.input_field.setText(user_input)
+        self.input_line.setText(user_input)
         self.colorize(user_input)
         self.check_final()
 
@@ -191,7 +193,7 @@ class MainWindow(QWidget):
         self.result_window.show()
 
     def on_submit(self):
-        user_input = self.input_field.text()
+        user_input = self.input_line.text()
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
         uuid_dct[self.key] = user_input
         behoof.save_json("user", f"{self.uuid}.json", uuid_dct)
@@ -199,6 +201,7 @@ class MainWindow(QWidget):
         self.check_final()
 
     def load_content_to_tab_layout(self, mashup):
+        random.shuffle(mashup)
         for idx, data in enumerate(mashup):
             tab = QWidget()
             answers = "?".join(f"{z['text']}:{z['weight']}" for z in data["answers"])
@@ -336,7 +339,7 @@ class ResultWindow(QWidget):
             font = ImageFont.truetype(fnt, 200)
         except IOError:
             font = ImageFont.load_default()
-        text = str(self.round_score)
+        text = str(self.round_score) + '%'
         bbox = draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]

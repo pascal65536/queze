@@ -47,7 +47,7 @@
                         ],
                         "answers": [
                             {
-                                "text": "x = 5",
+                                "text": "5",
                                 "weight": 1
                             }
                         ],
@@ -59,7 +59,7 @@
                         ],
                         "answers": [
                             {
-                                "text": "24 см²",
+                                "text": "24",
                                 "weight": 1
                             }
                         ],
@@ -95,7 +95,7 @@
                         ],
                         "answers": [
                             {
-                                "text": "20 см",
+                                "text": "20",
                                 "weight": 1
                             }
                         ],
