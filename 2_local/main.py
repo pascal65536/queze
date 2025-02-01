@@ -255,7 +255,7 @@ class ResultWindow(QWidget):
         self.user = user
         self.mashup = mashup
         self.score, self.count = self.calc_score()
-        self.round_score = round(self.score / self.count, 2)
+        self.round_score = int((self.score / self.count) * 100)
 
         self.setWindowTitle(f"Результаты теста")
         self.setGeometry(150, 150, 400, 300)
@@ -272,7 +272,7 @@ class ResultWindow(QWidget):
         self.name_label = QLabel(text, self)
         self.name_label.setFont(FONT)
         self.user_layout.addWidget(self.name_label)
-        text = f"Количество баллов: {self.round_score}"
+        text = f"Количество процентов: {self.round_score}"
         self.score_label = QLabel(text, self)
         self.score_label.setFont(FONT)
         self.user_layout.addWidget(self.score_label)
@@ -333,10 +333,10 @@ class ResultWindow(QWidget):
         draw = ImageDraw.Draw(image)
         try:
             fnt = os.path.join("fonts", "Krasnoyarsk.otf")
-            font = ImageFont.truetype(fnt, 300)
+            font = ImageFont.truetype(fnt, 200)
         except IOError:
             font = ImageFont.load_default()
-        text = str(self.round_score)
+        text = str(self.round_score) + "%"
         bbox = draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
