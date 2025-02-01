@@ -49,16 +49,15 @@ class MainWindow(QWidget):
         self.setWindowTitle("Локальная тестирующая система")
         self.resize(800, 600)
 
-        self.user = {
-            "last_name": "Воробей",
-            "first_name": "Джек",
-            "class_name": "11Ж",
-            "selected_theme": "Это название теста",
-            "tests": [],
-            "date": "2025-01-17T01:13:11.903253",
-            "uuid": str(uuid.uuid4()),
-            # "uuid": "238dc614-e096-4d20-b1e2-d489a92b1cdc",
-        }
+        # self.user = {
+        #     "last_name": "Воробей",
+        #     "first_name": "Джек",
+        #     "class_name": "11Ж",
+        #     "selected_theme": "Это название теста",
+        #     "tests": [],
+        #     "date": "2025-01-17T01:13:11.903253",
+        #     "uuid": str(uuid.uuid4()),
+        # }
 
         if self.user is None:
             title = list()
