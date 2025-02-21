@@ -1,9 +1,7 @@
-import re
 import os
 import sys
 import time
 import uuid
-import string
 import behoof
 import random
 import datetime
@@ -43,11 +41,6 @@ class MainWindow(QWidget):
         self.test_name = None
         self.test_char = None
         self.test_value = None
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle("Локальная тестирующая система")
-        self.resize(800, 600)
 
         # self.user = {
         #     "last_name": "Воробей",
@@ -65,6 +58,12 @@ class MainWindow(QWidget):
                 title.append(dl["title"])
             if not self.show_modal_window(title):
                 sys.exit()
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Локальная тестирующая система")
+        self.resize(800, 600)
 
         self.uuid = self.user.get("uuid")
         last_name = self.user.get("last_name")
@@ -88,7 +87,7 @@ class MainWindow(QWidget):
                         self.mashup.extend(mashup_lst[: mashup[key]])
             break
 
-        self.layout = QVBoxLayout()
+        self.layout_main = QVBoxLayout()
 
         self.user_layout = QHBoxLayout()
         self.username_label = QLabel(f"Имя пользователя: {last_name} {first_name}")
@@ -101,7 +100,7 @@ class MainWindow(QWidget):
         self.final_button.setFont(FONT)
 
         self.user_layout.addWidget(self.final_button)
-        self.layout.addLayout(self.user_layout)
+        self.layout_main.addLayout(self.user_layout)
 
         self.time_layout = QHBoxLayout()
         self.current_time_label = QLabel("Текущее время: ")
@@ -113,9 +112,10 @@ class MainWindow(QWidget):
         self.app_time_label.setFont(FONT)
 
         self.time_layout.addWidget(self.app_time_label)
-        self.layout.addLayout(self.time_layout)
+        self.layout_main.addLayout(self.time_layout)
         self.tab_layout = QVBoxLayout()
         self.tab_widget = QTabWidget()
+
         self.tab_widget.currentChanged.connect(self.on_tab_change)
 
         self.tab_layout.addWidget(self.tab_widget)
@@ -134,8 +134,9 @@ class MainWindow(QWidget):
 
         self.input_layout.addWidget(self.submit_button)
         self.tab_layout.addLayout(self.input_layout)
-        self.layout.addLayout(self.tab_layout)
-        self.setLayout(self.layout)
+        self.layout_main.addLayout(self.tab_layout)
+        self.setLayout(self.layout_main)
+
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_time)
         self.timer.start(1000)
@@ -193,6 +194,8 @@ class MainWindow(QWidget):
 
     def on_submit(self):
         user_input = self.input_line.text()
+        if not user_input:
+            print('-' * 20)
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
         uuid_dct[self.key] = user_input
         behoof.save_json("user", f"{self.uuid}.json", uuid_dct)
@@ -244,7 +247,6 @@ class MainWindow(QWidget):
                 "date": datetime.datetime.now().isoformat(),
                 "uuid": str(uuid.uuid4()),
             }
-            self.initUI()
             return True
         return False
 
@@ -267,7 +269,7 @@ class ResultWindow(QWidget):
         selected_theme = self.user.get("selected_theme")
         class_name = self.user.get("class_name")
 
-        self.layout = QVBoxLayout()
+        self.layout_main = QVBoxLayout()
 
         self.user_layout = QHBoxLayout()
         text = f"Пользователь: {last_name} {first_name}"
@@ -279,7 +281,7 @@ class ResultWindow(QWidget):
         self.score_label = QLabel(text, self)
         self.score_label.setFont(FONT)
         self.user_layout.addWidget(self.score_label)
-        self.layout.addLayout(self.user_layout)
+        self.layout_main.addLayout(self.user_layout)
 
         self.test_layout = QHBoxLayout()
         text = f"Тема теста: {selected_theme}"
@@ -290,7 +292,7 @@ class ResultWindow(QWidget):
         self.score_label = QLabel(text, self)
         self.score_label.setFont(FONT)
         self.test_layout.addWidget(self.score_label)
-        self.layout.addLayout(self.test_layout)
+        self.layout_main.addLayout(self.test_layout)
 
         self.score_layout = QHBoxLayout()
         text = f"Класс: {class_name}"
@@ -301,18 +303,18 @@ class ResultWindow(QWidget):
         self.count_label = QLabel(text, self)
         self.count_label.setFont(FONT)
         self.score_layout.addWidget(self.count_label)
-        self.layout.addLayout(self.score_layout)
+        self.layout_main.addLayout(self.score_layout)
 
         self.pic_label = QLabel(self)
         self.pic_label.setPixmap(self.get_pixmap())
-        self.layout.addWidget(self.pic_label)
+        self.layout_main.addWidget(self.pic_label)
 
         self.close_button = QPushButton("Закрыть", self)
         self.close_button.setFont(FONT)
         self.close_button.clicked.connect(self.close)
-        self.layout.addWidget(self.close_button)
+        self.layout_main.addWidget(self.close_button)
 
-        self.setLayout(self.layout)
+        self.setLayout(self.layout_main)
 
     def calc_score(self):
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
@@ -360,20 +362,20 @@ class AuthorizationDialog(QDialog):
     def __init__(self, parent=None, title_lst=list()):
         super().__init__(parent)
         self.setWindowTitle("Авторизация")
-        self.layout = QFormLayout()
+        self.layout_main = QFormLayout()
         self.last_name_input = QLineEdit()
-        self.layout.addRow("Фамилия:", self.last_name_input)
+        self.layout_main.addRow("Фамилия:", self.last_name_input)
         self.first_name_input = QLineEdit()
-        self.layout.addRow("Имя:", self.first_name_input)
+        self.layout_main.addRow("Имя:", self.first_name_input)
         self.class_input = QLineEdit()
-        self.layout.addRow("Класс:", self.class_input)
+        self.layout_main.addRow("Класс:", self.class_input)
         self.test_themes_combo = QComboBox()
         self.test_themes_combo.addItems(title_lst)
-        self.layout.addRow("Тема теста:", self.test_themes_combo)
+        self.layout_main.addRow("Тема теста:", self.test_themes_combo)
         self.submit_button = QPushButton("Отправить")
         self.submit_button.clicked.connect(self.validate_and_accept)
-        self.layout.addRow(self.submit_button)
-        self.setLayout(self.layout)
+        self.layout_main.addRow(self.submit_button)
+        self.setLayout(self.layout_main)
 
     def validate_and_accept(self):
         is_valid = True
