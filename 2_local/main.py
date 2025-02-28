@@ -8,7 +8,6 @@ import behoof
 import random
 import datetime
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
 from PyQt6.QtWidgets import (
     QFormLayout,
     QMessageBox,
@@ -26,6 +25,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QPixmap, QFont
 from PyQt6.QtCore import QTimer, QTime, Qt
+from PIL import Image, ImageDraw, ImageFont
 
 
 FONT = QFont(None, 16, QFont.Weight.Bold)
@@ -49,23 +49,12 @@ class MainWindow(QWidget):
         self.setWindowTitle("Локальная тестирующая система")
         self.resize(800, 600)
 
-        self.user = {
-            "last_name": "Воробей",
-            "first_name": "Джек",
-            "class_name": "11Ж",
-            "selected_theme": "Это название теста",
-            "tests": [],
-            "date": "2025-01-17T01:13:11.903253",
-            "uuid": str(uuid.uuid4()),
-            # "uuid": "238dc614-e096-4d20-b1e2-d489a92b1cdc",
-        }
-
         if self.user is None:
             title = list()
             for dl in self.data_dct.values():
                 title.append(dl["title"])
-            if not self.show_modal_window(title):
-                sys.exit()
+            self.show_modal_window(title)
+            return
 
         self.uuid = self.user.get("uuid")
         last_name = self.user.get("last_name")
@@ -123,12 +112,11 @@ class MainWindow(QWidget):
         self.tab_widget.setStyleSheet(style_sheet)
 
         self.input_layout = QHBoxLayout()
+        self.input_field = QLineEdit()
+        self.input_field.setPlaceholderText("Введите ваш ответ здесь...")
+        self.input_field.setFont(FONT)
 
-        self.input_line = QLineEdit()
-        self.input_line.setPlaceholderText("Введите ваш ответ здесь...")
-        self.input_line.setFont(FONT)
-
-        self.input_layout.addWidget(self.input_line)        
+        self.input_layout.addWidget(self.input_field)
         self.submit_button = QPushButton("Отправить")
         self.submit_button.clicked.connect(self.on_submit)
         self.submit_button.setFont(FONT)
@@ -174,10 +162,10 @@ class MainWindow(QWidget):
         self.test_char = char
         self.test_value = value
 
-        self.input_line.clear()
+        self.input_field.clear()
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
         user_input = uuid_dct.get(self.key, str())
-        self.input_line.setText(user_input)
+        self.input_field.setText(user_input)
         self.colorize(user_input)
         self.check_final()
 
@@ -193,7 +181,7 @@ class MainWindow(QWidget):
         self.result_window.show()
 
     def on_submit(self):
-        user_input = self.input_line.text()
+        user_input = self.input_field.text()
         uuid_dct = behoof.load_json("user", f"{self.uuid}.json")
         uuid_dct[self.key] = user_input
         behoof.save_json("user", f"{self.uuid}.json", uuid_dct)
@@ -201,7 +189,6 @@ class MainWindow(QWidget):
         self.check_final()
 
     def load_content_to_tab_layout(self, mashup):
-        random.shuffle(mashup)
         for idx, data in enumerate(mashup):
             tab = QWidget()
             answers = "?".join(f"{z['text']}:{z['weight']}" for z in data["answers"])
@@ -246,8 +233,6 @@ class MainWindow(QWidget):
                 "uuid": str(uuid.uuid4()),
             }
             self.initUI()
-            return True
-        return False
 
 
 class ResultWindow(QWidget):
@@ -355,8 +340,6 @@ class ResultWindow(QWidget):
         return pixmap
 
 
-
-
 class AuthorizationDialog(QDialog):
     def __init__(self, parent=None, title_lst=list()):
         super().__init__(parent)
@@ -378,9 +361,9 @@ class AuthorizationDialog(QDialog):
 
     def validate_and_accept(self):
         is_valid = True
-        last_name = self.last_name_input.text()
-        first_name = self.first_name_input.text()
-        class_name = self.class_input.text()
+        last_name = self.last_name_input.text().strip()
+        first_name = self.first_name_input.text().strip()
+        class_name = self.class_input.text().strip()
         if not class_name:
             is_valid = False
         elif len(class_name) not in [2, 3]:
@@ -397,7 +380,7 @@ class AuthorizationDialog(QDialog):
             is_valid = False
         elif not first_name:
             is_valid = False
-        elif len(first_name) < 3:
+        elif len(first_name) < 2:
             is_valid = False
         elif set(first_name.lower()) - set(behoof.rus_alphabet):
             is_valid = False
