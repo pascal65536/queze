@@ -5,6 +5,14 @@ import openpyxl
 import datetime
 import shutil
 import string
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    filename="convert_xlsx.log",
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 def read_xlsx(folder_name, file_name):
@@ -34,6 +42,15 @@ def read_xlsx(folder_name, file_name):
                     res_dct[name].append({res[0].replace(' ', ''): res[1]})
                 else:
                     res_dct[name] = res[0]
+            if not res_dct['title']:
+                logging.info(f'{worksheet.title=}, {filename=}, Не найдено название теста')
+                exit()
+            if not res_dct['rules']:
+                logging.info(f'{worksheet.title=}, {filename=}, Не найдены правила теста')
+                exit()
+            if not res_dct['mashup']:
+                logging.info(f'{worksheet.title=}, {filename=}, Не найден состав вопросов')
+                exit()
                 
         else:
             key = None
@@ -41,8 +58,7 @@ def read_xlsx(folder_name, file_name):
             local_dct = dict()
             worksheet_title = worksheet.title.strip().replace(' ', '')
             if worksheet_title not in [y for z in res_dct['mashup'] for y in z]:
-                print('-' * 80)
-                print('Не найдено:', worksheet_title)
+                logging.info('Не найдено:', worksheet_title)
                 exit()
             this_dct.setdefault(worksheet_title, list())
             char = 0
@@ -50,24 +66,29 @@ def read_xlsx(folder_name, file_name):
                 res = [c.value for c in row if c.value != None]
                 if not res:
                     continue
-                
-                if res[0] == "Question":
+
+                if isinstance(res[0], str) and res[0].lower().strip() == "Question".lower():
                     if local_dct:
                         local_dct["question"] = "\n".join(local_dct["question"])
                         local_dct = dict()
                     key = "question"
                     continue
-                elif res[0] == "Answer":
+                elif isinstance(res[0], str) and res[0].lower().strip() == "Answer".lower():
                     key = "answers"
                     continue
-                elif res[0] == "Images":
+                elif isinstance(res[0], str) and res[0].lower().strip() == "Images".lower():
                     key = "images"
                     continue
                                 
                 local_dct.setdefault(key, list())
                 if key == "answers":
-                    local_dct[key].append({"text": res[0], "weight": res[1]})
-                    local_dct['char'] = string.ascii_lowercase[char]
+                    try:
+                        local_dct[key].append({"text": res[0], "weight": res[1]})
+                        local_dct['char'] = string.ascii_lowercase[char]
+                    except Exception as e:
+                        logging.info(f'{filename=}, {worksheet.title=}, {key=}, {res=}')
+                        logging.info(e)
+                        exit()
                     char += 1
                     this_dct[worksheet_title].append(local_dct)
                     local_dct = dict()
@@ -75,8 +96,7 @@ def read_xlsx(folder_name, file_name):
                     images = res[0].strip()
                     inp = os.path.join(folder_name, images)
                     if not os.path.exists(inp):
-                        print('-' * 80)
-                        print('Не найдено:', inp)
+                        logging.info('Не найдено:', inp)
                         exit()
                     ext = images.split(".")[-1].lower()
                     secret_filename = f"{calculate_md5(inp)}.{ext}"
@@ -95,7 +115,7 @@ def read_xlsx(folder_name, file_name):
            
 
 if __name__ == "__main__":
-    print('Конвертация XLSX в JSON')
+    logging.info('Конвертация XLSX в JSON')
     input_folder = 'input'
     if not os.path.exists(input_folder):
         os.makedirs(input_folder)     
